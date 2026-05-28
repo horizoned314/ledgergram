@@ -5,8 +5,9 @@ import httpx
 from io import BytesIO
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 import asyncio
+import datetime
 
 load_dotenv()
 
@@ -64,6 +65,60 @@ async def get_summary_handler(message: Message):
         text += f"- {row[0].capitalize()}: {row[1]:.2f}\n"
     
     await message.reply(text)
+
+@dp.message(Command("add"))
+async def add_manual_transaction(message: Message, command: CommandObject):
+    user_id = message.from_user.id
+    if not is_authorized(user_id):
+        return await message.reply("❌ Unauthorized")
+
+    # Check if the user actually typed arguments after /add
+    if not command.args:
+        return await message.reply(
+            "⚠️ **Usage:** `/add <amount> <income/expense> <merchant>`\n"
+            "**Example:** `/add 50000 expense Starbucks`",
+            parse_mode="Markdown"
+        )
+
+    # Split the text into exactly 3 parts: amount, type, and the rest becomes the merchant
+    args = command.args.split(maxsplit=2)
+    if len(args) < 3:
+        return await message.reply("❌ Missing details. Please provide amount, type, and merchant.")
+
+    amount_str, tx_type, merchant = args
+    tx_type = tx_type.lower()
+
+    # Validate the data
+    try:
+        amount = float(amount_str)
+    except ValueError:
+        return await message.reply("❌ Amount must be a number.")
+
+    if tx_type not in ['income', 'expense']:
+        return await message.reply("❌ Type must be exactly 'income' or 'expense'.")
+
+    # Save directly to the database
+    from api.db import save_transaction
+    today = datetime.datetime.now().strftime("%d/%m/%Y")
+
+    try:
+        save_transaction(
+            amount=amount,
+            tx_type=tx_type,
+            merchant=merchant,
+            date=today,
+            raw_text="MANUAL ENTRY"
+        )
+        
+        await message.reply(
+            "✅ **Manual Entry Saved**\n"
+            f"🏬 Merchant: {merchant}\n"
+            f"📅 Date: {today}\n"
+            f"💰 Amount: {amount}\n"
+            f"📂 Type: {tx_type.capitalize()}"
+        )
+    except Exception as e:
+        await message.reply(f"❌ Database Error: {e}")
 
 @dp.message(F.photo | F.document)
 async def handle_receipt(message: Message):
