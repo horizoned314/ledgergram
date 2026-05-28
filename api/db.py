@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = "../data/receipts.db"
+DB_PATH = "data/receipts.db"
 
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
