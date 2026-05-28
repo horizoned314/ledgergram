@@ -41,7 +41,7 @@ async def send_welcome(message: Message):
         return await message.reply("❌ Unauthorized")
     
     await message.reply(
-        "🧾 **Ledgergram Bot**\n\n"
+        "🧾 **Ledgergram Bot** \n\n"
         "Send me an image or document (uncompressed) of a receipt, and I will extract the details.\n"
         "Commands:\n"
         "/summary - View total income/expenses."
@@ -52,19 +52,41 @@ async def get_summary_handler(message: Message):
     if not is_authorized(message.from_user.id):
         return await message.reply("❌ Unauthorized")
     
-    # We query SQLite via a quick internal call (or we could expose an endpoint)
-    # For speed and single-container architecture, querying the db module directly is acceptable here
     from api.db import get_summary
     
     summary = get_summary()
     if not summary:
         return await message.reply("No transactions found.")
         
-    text = "📊 **Transaction Summary:**\n"
-    for row in summary:
-        text += f"- {row[0].capitalize()}: {row[1]:.2f}\n"
+    total_income = 0.0
+    total_expense = 0.0
     
-    await message.reply(text)
+    text = "📊 **Transaction Summary:**\n\n"
+    
+    # Parse the database results
+    for row in summary:
+        tx_type = row[0].lower()
+        amount = row[1]
+        
+        if tx_type == 'income':
+            total_income = amount
+        elif tx_type == 'expense':
+            total_expense = amount
+            
+        # Added "Rp " before the formatted amount
+        text += f"🔹 **{tx_type.capitalize()}**: Rp {amount:,.2f}\n"
+    
+    # Calculate the net balance
+    current_money = total_income - total_expense
+    
+    # Choose emoji based on positive or negative balance
+    balance_emoji = "🟢" if current_money >= 0 else "🔴"
+    
+    text += "➖➖➖➖➖➖➖➖➖➖\n"
+    # Added "Rp " before the formatted balance
+    text += f"{balance_emoji} **Current Balance**: Rp {current_money:,.2f}"
+    
+    await message.reply(text, parse_mode="Markdown")
 
 @dp.message(Command("add"))
 async def add_manual_transaction(message: Message, command: CommandObject):
