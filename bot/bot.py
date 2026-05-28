@@ -44,7 +44,8 @@ async def send_welcome(message: Message):
         "🧾 **Ledgergram Bot** \n\n"
         "Send me an image or document (uncompressed) of a receipt, and I will extract the details.\n"
         "Commands:\n"
-        "/summary - View total income/expenses."
+        "/summary - View total income/expenses.\n"
+        "/add <amount> <income/expense> <description> - Manually add a transaction.\n\n"
     )
 
 @dp.message(Command("summary"))
