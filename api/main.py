@@ -1,10 +1,13 @@
 import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException
 from api.ocr import perform_ocr
 from api.parser import parse_receipt_text
 from api.db import init_db, save_transaction
 
 app = FastAPI()
+
+load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 

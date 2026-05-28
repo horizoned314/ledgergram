@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import time
 import httpx
 from io import BytesIO
@@ -6,6 +7,8 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
 from aiogram.filters import Command
 import asyncio
+
+load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 API_KEY = os.getenv("API_KEY")
@@ -37,7 +40,7 @@ async def send_welcome(message: Message):
         return await message.reply("❌ Unauthorized")
     
     await message.reply(
-        "🧾 **Receipt OCR Bot**\n\n"
+        "🧾 **Ledgergram Bot**\n\n"
         "Send me an image or document (uncompressed) of a receipt, and I will extract the details.\n"
         "Commands:\n"
         "/summary - View total income/expenses."
